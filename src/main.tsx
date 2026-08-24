@@ -181,7 +181,7 @@ const DEFAULT_MONTHLY_GOALS: MonthlyGoalTargets = {
   checkinDays: 25,
 };
 
-const MONTHLY_GOALS_STORAGE_KEY = "personal-goal-tracker-monthly-goals";
+const MONTHLY_GOALS_STORAGE_KEY = "personal-goal-manager-monthly-goals";
 
 function App() {
   // -------------------------
@@ -1290,12 +1290,41 @@ const consistencyData = useMemo(() => {
     setAuthActionLoading(true);
 
     try {
+      const { data: existingSessionData, error: existingSessionError } =
+        await supabase.auth.signInWithPassword({
+          email: authEmail,
+          password: authPassword,
+        });
+
+      if (!existingSessionError && existingSessionData.user) {
+        setAuthError(
+          "An account with this email already exists. Please sign in instead."
+        );
+        setAuthMode("signin");
+        return;
+      }
+
       const { data, error } = await supabase.auth.signUp({
         email: authEmail,
         password: authPassword,
       });
 
-      if (error) throw error;
+      if (error) {
+        const message = error.message.toLowerCase();
+
+        if (
+          message.includes("already registered") ||
+          message.includes("user already")
+        ) {
+          setAuthError(
+            "An account with this email already exists. Please sign in instead."
+          );
+          setAuthMode("signin");
+          return;
+        }
+
+        throw error;
+      }
 
       setLastAuthEmail(authEmail || null);
       setAuthSuccess(

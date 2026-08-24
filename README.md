@@ -1,4 +1,4 @@
-# GoalTrack
+# GoalManager
 
 A mobile-first personal tracker for:
 - Trading P&L and trading discipline

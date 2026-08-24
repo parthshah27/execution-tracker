@@ -26,7 +26,31 @@ export type CreateGoalInput = {
   deadline: string | null;
 };
 
+async function getAuthenticatedUser() {
+  const {
+    data: { session },
+    error,
+  } = await supabase.auth.getSession();
+
+  if (error) {
+    if (error.message.toLowerCase().includes("jwt issued at future")) {
+      await supabase.auth.signOut();
+      return null;
+    }
+
+    throw new Error(error.message);
+  }
+
+  return session?.user ?? null;
+}
+
 export async function getGoals(): Promise<Goal[]> {
+  const user = await getAuthenticatedUser();
+
+  if (!user) {
+    return [];
+  }
+
   const { data, error } = await supabase
     .from("goals")
     .select(`
